@@ -75,10 +75,10 @@ mStatus_t MessageQueue_RegisterMsg(msg_src_t src, msgQueueCallback_t mCallback)
 		return mErr;
 	for (unsigned int i = 0; i < MAX_MSG_SRC; i++) {
 		if (i == src) {
-			list_node_t *node = list_node_new((void*)mCallback);
+			list_node_t *node = custom_list_node_new((void*)mCallback);
 			portMUX_TYPE myMutex = portMUX_INITIALIZER_UNLOCKED;
 			vTaskEnterCritical(&myMutex);
-			list_lpush(&recevierList[i], node);
+			custom_list_lpush(&recevierList[i], node);
 			vTaskExitCritical(&myMutex);
 			return mPass;
 		}
@@ -91,11 +91,11 @@ mStatus_t MessageQueue_DeregisterMsg(msgQueueCallback_t mCallback)
 	if (recevierList == NULL)
 		return mErr;
 	for (unsigned int i = 0; i < MAX_MSG_SRC; i++){
-		list_node_t *node = list_find(&recevierList[i], mCallback);
+		list_node_t *node = custom_list_find(&recevierList[i], mCallback);
 		if (node != NULL) {
 			portMUX_TYPE myMutex = portMUX_INITIALIZER_UNLOCKED;
 			vTaskEnterCritical(&myMutex);
-			list_remove(&recevierList[i], node);
+			custom_list_remove(&recevierList[i], node);
 			vTaskExitCritical(&myMutex);
 			return mPass;
 		}
@@ -118,13 +118,13 @@ void msgQueueTask(void *pvParameters) {
 void vProcessMsg(msg_src_t src, void *msg) {
 	if (src >= MAX_MSG_SRC)
 		return;
-	list_iterator_t *it = list_iterator_new(&recevierList[src], LIST_TAIL);
-	list_node_t *eL = list_iterator_next(it);
+	list_iterator_t *it = custom_list_iterator_new(&recevierList[src], LIST_TAIL);
+	list_node_t *eL = custom_list_iterator_next(it);
 	msgQueueCallback_t callback;
 	while (eL) {
 		callback = (msgQueueCallback_t)eL->val;
 		callback(msg);
-		eL = list_iterator_next(it);
+		eL = custom_list_iterator_next(it);
 	}
-	list_iterator_destroy(it);
+	custom_list_iterator_destroy(it);
 }

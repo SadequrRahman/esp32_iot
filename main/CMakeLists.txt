@@ -4,12 +4,13 @@
 set(src 
 "app.c"
 "heartBeat.c"
-"custom_list_iterator.c"
-"custom_list_node.c"
-"custom_list.c"
 "wifi_driver.c"
 "mqtt_manager.c"
 "MessageQueue.c"
+"BleManager.c"
+"custom_list_iterator.c"
+"custom_list_node.c"
+"custom_list.c"
 )
 idf_component_register(SRCS "${src}" 
                     INCLUDE_DIRS "." )

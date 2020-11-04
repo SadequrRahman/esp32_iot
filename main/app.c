@@ -18,20 +18,27 @@
 #include "esp_websocket_client.h"
 #include "mqtt_manager.h"
 #include "MessageQueue.h"
+#include "BleManager.h"
+
+
 
 static const char *TAG = "app";
 
 
+
 void wifiEventReciver(void * mMsg)
 {
-	uint8_t status = *((uint8_t*)mMsg);
-	switch (status) {
+	wifiDriver_Msg_t *msg = (wifiDriver_Msg_t*)mMsg;
+	switch (msg->eventId) {
+		case WIFI_STATION_CONNECTED:
+			ESP_LOGI(TAG, "wifi station is connected");
+			break;
 		case WIFI_CONNECTED:
-			ESP_LOGI(TAG, "wifi connected");
+			ESP_LOGI(TAG, "wifi gots ip: %s", ip4addr_ntoa(&msg->ipInfo.ip));
 			mqtt_app_start();
 			break;
 		case WIFI_DISCONNECTED:
-			ESP_LOGI(TAG, "wifi disconnected");
+			ESP_LOGI(TAG, "wifi is disconnected");
 			break;
 		default:
 			break;
@@ -39,23 +46,29 @@ void wifiEventReciver(void * mMsg)
 }
 
 void app_main(void) {
-	nvs_flash_init();
-	ESP_LOGI(TAG, "[APP] Startup..");
-	ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
-	ESP_LOGI(TAG, "[APP] IDF version: %s", esp_get_idf_version());
+	esp_err_t ret;
 
-//	esp_log_level_set("*", ESP_LOG_INFO);
-//	esp_log_level_set("MQTT_CLIENT", ESP_LOG_VERBOSE);
-//	esp_log_level_set("MQTT_EXAMPLE", ESP_LOG_VERBOSE);
-//	esp_log_level_set("TRANSPORT_TCP", ESP_LOG_VERBOSE);
-//	esp_log_level_set("TRANSPORT_SSL", ESP_LOG_VERBOSE);
-//	esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
-//	esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
+	/* Initialize NVS. */
+	ret = nvs_flash_init();
+	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+		ESP_ERROR_CHECK(nvs_flash_erase());
+		ret = nvs_flash_init();
+	}
+	ESP_ERROR_CHECK( ret );
+
 
 	MessageQueue_Init(15);
-	wifiDriver_init();
 	MessageQueue_RegisterMsg(wifiDriver, wifiEventReciver);
+	wifiDriver_init();
 	heartBeat_init();
+	BleManager_init("SensorNode");
+	esp_ble_adv_data_t *advData = BleManager_getDefaultAdvData();
+	esp_ble_adv_params_t *advParams = BleManager_getDefaultAdvertiseParam();
+	esp_ble_adv_data_t *scanResp = BleManager_getDefaultAdvRespData();
+
+	BleManager_setAdvParams(advParams);
+	BleManager_setAdvRespData(scanResp);
+	BleManager_setAdvData(advData);
 
 
 }
