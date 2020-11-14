@@ -78,7 +78,7 @@ typedef struct {
 
 
 
-void BleManager_init(char *deviceName);
+void BleManager_init(char *deviceName, uint8_t applicationID);
 const char* BleManager_getDeviceName(void);
 
 

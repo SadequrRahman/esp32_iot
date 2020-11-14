@@ -58,10 +58,10 @@ void app_main(void) {
 
 
 	MessageQueue_Init(15);
-	MessageQueue_RegisterMsg(wifiDriver, wifiEventReciver);
-	wifiDriver_init();
+	//MessageQueue_RegisterMsg(wifiDriver, wifiEventReciver);
+	//wifiDriver_init();
 	heartBeat_init();
-	BleManager_init("SensorNode");
+	BleManager_init("SensorNode",0);
 	esp_ble_adv_data_t *advData = BleManager_getDefaultAdvData();
 	esp_ble_adv_params_t *advParams = BleManager_getDefaultAdvertiseParam();
 	esp_ble_adv_data_t *scanResp = BleManager_getDefaultAdvRespData();

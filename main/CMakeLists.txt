@@ -11,6 +11,7 @@ set(src
 "custom_list_iterator.c"
 "custom_list_node.c"
 "custom_list.c"
+"BleDevice.c"
 )
 idf_component_register(SRCS "${src}" 
                     INCLUDE_DIRS "." )

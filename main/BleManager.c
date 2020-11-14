@@ -24,8 +24,7 @@ static uint8_t adv_service_uuid128[16] = {
 		/* LSB <--------------------------------------------------------------------------------> MSB */
 		//first uuid, 16bit, [12],[13] is the value
 		0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00,
-		0x09, 0x18, 0x00, 0x00,
-		};
+		0x09, 0x18, 0x00, 0x00, };
 
 //gatt
 static void gap_event_handler(esp_gap_ble_cb_event_t event,
@@ -33,7 +32,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event,
 static void gatts_event_handler(esp_gatts_cb_event_t event,
 		esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 
-void BleManager_init(char *deviceName) {
+void BleManager_init(char *deviceName, uint8_t applicationID) {
 	esp_err_t ret;
 	ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
 	esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
@@ -65,7 +64,7 @@ void BleManager_init(char *deviceName) {
 		return;
 	}
 	ESP_LOGI(TAG, "bluedroid enabled");
-	ret = esp_ble_gatts_register_callback(gatts_event_handler); //changed -palok
+	ret = esp_ble_gatts_register_callback(gatts_event_handler);
 	if (ret) {
 		ESP_LOGE(TAG, "gatts register error, error code = %x", ret);
 		return;
@@ -82,7 +81,7 @@ void BleManager_init(char *deviceName) {
 		ESP_LOGE(TAG, "set local  MTU failed, error code = %x", local_mtu_ret);
 	}
 	ESP_LOGI(TAG, "Local mtu set to 512");
-	ret = esp_ble_gatts_app_register(0);
+	ret = esp_ble_gatts_app_register(applicationID);
 	if (ret) {
 		ESP_LOGE(TAG, "gatts app register error, error code = %x", ret);
 		return;
@@ -90,7 +89,7 @@ void BleManager_init(char *deviceName) {
 	ESP_LOGI(TAG, "Register to gap service");
 
 	mDeviceName = deviceName;
-	ret = esp_ble_gap_set_device_name(deviceName);
+	ret = esp_ble_gap_set_device_name(mDeviceName);
 	if (ret) {
 		ESP_LOGE(TAG, "set device name failed, error code = %x", ret);
 	}
@@ -116,7 +115,7 @@ esp_ble_adv_data_t* BleManager_getDefaultAdvData(void) {
 	default_adv_data->service_data_len = 0;
 	default_adv_data->p_service_data = NULL;
 	default_adv_data->service_uuid_len = 32;
-	//default_adv_data->p_service_uuid = adv_service_uuid128;
+	default_adv_data->p_service_uuid = adv_service_uuid128;
 	default_adv_data->flag = (ESP_BLE_ADV_FLAG_GEN_DISC
 			| ESP_BLE_ADV_FLAG_BREDR_NOT_SPT);
 
