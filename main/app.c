@@ -18,11 +18,15 @@
 #include "esp_websocket_client.h"
 #include "mqtt_manager.h"
 #include "MessageQueue.h"
-#include "BleManager.h"
+#include "BleDevice.h"
 
 
 
 static const char *TAG = "app";
+
+ble_profile_t* profile = (void*)0;
+bleDevice_config_t *conf = (void*)0;
+esp_gatt_srvc_id_t s1uuid;
 
 
 
@@ -47,7 +51,6 @@ void wifiEventReciver(void * mMsg)
 
 void app_main(void) {
 	esp_err_t ret;
-
 	/* Initialize NVS. */
 	ret = nvs_flash_init();
 	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -57,18 +60,22 @@ void app_main(void) {
 	ESP_ERROR_CHECK( ret );
 
 
-	MessageQueue_Init(15);
+	//MessageQueue_Init(15);
 	//MessageQueue_RegisterMsg(wifiDriver, wifiEventReciver);
 	//wifiDriver_init();
 	heartBeat_init();
-	BleManager_init("SensorNode",0);
-	esp_ble_adv_data_t *advData = BleManager_getDefaultAdvData();
-	esp_ble_adv_params_t *advParams = BleManager_getDefaultAdvertiseParam();
-	esp_ble_adv_data_t *scanResp = BleManager_getDefaultAdvRespData();
-
-	BleManager_setAdvParams(advParams);
-	BleManager_setAdvRespData(scanResp);
-	BleManager_setAdvData(advData);
+	conf = BleDevice_getDefaultConfig();
+	BleDevice_init("OnTest", conf);
+	// create default profile
+	profile = BleProfiles_createProfile();
+	BleDevice_addProfile(profile);
+	s1uuid.id.uuid.len = ESP_UUID_LEN_16;
+	s1uuid.id.uuid.uuid.uuid16 = 0x00FF;
+	s1uuid.is_primary = true;
+	s1uuid.id.inst_id = 0;
+	ble_service_t* service =  BleProfiles_createService(&s1uuid, 0x0004);
+	BleProfiles_addService(profile, service);
+	BleDevice_activateProfiles();
 
 
 }
