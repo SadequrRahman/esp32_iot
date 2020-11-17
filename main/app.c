@@ -26,7 +26,6 @@ static const char *TAG = "app";
 
 ble_profile_t* profile = (void*)0;
 bleDevice_config_t *conf = (void*)0;
-esp_gatt_srvc_id_t s1uuid;
 
 
 
@@ -49,6 +48,8 @@ void wifiEventReciver(void * mMsg)
 	}
 }
 
+uint16_t UUID = 0xFF00;
+
 void app_main(void) {
 	esp_err_t ret;
 	/* Initialize NVS. */
@@ -69,11 +70,7 @@ void app_main(void) {
 	// create default profile
 	profile = BleProfiles_createProfile();
 	BleDevice_addProfile(profile);
-	s1uuid.id.uuid.len = ESP_UUID_LEN_16;
-	s1uuid.id.uuid.uuid.uuid16 = 0x00FF;
-	s1uuid.is_primary = true;
-	s1uuid.id.inst_id = 0;
-	ble_service_t* service =  BleProfiles_createService(&s1uuid, 0x0004);
+	ble_service_t* service =  BleProfiles_createService(&UUID, 2, 4, true);
 	BleProfiles_addService(profile, service);
 	BleDevice_activateProfiles();
 

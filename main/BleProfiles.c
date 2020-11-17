@@ -34,11 +34,17 @@ void BleProfiles_addService(ble_profile_t *pf, ble_service_t *service)
 }
 
 
-ble_service_t* BleProfiles_createService(esp_gatt_srvc_id_t *suuid)
+ble_service_t* BleProfiles_createService(uint8_t *uuid, uint8_t len, uint8_t nHandle, bool isPrimary)
 {
 	ble_service_t* ns = (ble_service_t*) malloc(sizeof(ble_service_t));
 	memset((void*)ns, 0 , sizeof(ble_service_t));
 	ns->mCharList = custom_list_new();
-	ns->service_id = suuid;
+	ns->mService_id = (esp_gatt_srvc_id_t*) malloc(sizeof(esp_gatt_srvc_id_t));
+	memset((void*)ns->mService_id, 0 , sizeof(esp_gatt_srvc_id_t));
+	memcpy((void*)ns->mService_id->id.uuid.uuid.uuid128,(void*)uuid, len);
+	ns->mService_id->id.uuid.len = len;
+	ns->mService_id->is_primary = isPrimary;
+	ns->mNumHandle = nHandle;
+
 	return ns;
 }

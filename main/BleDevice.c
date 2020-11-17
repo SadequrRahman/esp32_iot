@@ -90,6 +90,7 @@ void BleDevice_init(char *pName, bleDevice_config_t *config)
 		if (ret) {
 			ESP_LOGE(TAG, "config adv data failed, error code = %x", ret);
 		}
+		esp_ble_gap_set_device_name(mDeviceHandler->mName);
 	}
 
 }
@@ -243,6 +244,7 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 				{
 					ESP_LOGI(TAG, "Found profile index. setting gatts if");
 					profile->mGatt_if = gatts_if;
+					ESP_LOGI(TAG, "profile->mGatt_if %d, gatts_if %d\n", profile->mGatt_if, gatts_if);
 					ble_service_t* service = (void*)0;
 					list_iterator_t *iterator1 = custom_list_iterator_new(profile->mServiceList, LIST_HEAD);
 					list_node_t *item1 = custom_list_iterator_next(iterator1);
@@ -250,7 +252,7 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 					{
 						service = (ble_service_t*)item1->val;
 						ESP_LOGI(TAG, "Adding services to profile %d", profile->mId );
-						esp_ble_gatts_create_service(profile->mGatt_if, service->service_id, service->service_handle);
+						esp_ble_gatts_create_service(profile->mGatt_if, service->mService_id, service->mNumHandle);
 						item1 = custom_list_iterator_next(iterator1);
 					}
 					custom_list_iterator_destroy(iterator1);
@@ -259,7 +261,6 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 				item = custom_list_iterator_next(iterator);
 			}
 			custom_list_iterator_destroy(iterator);
-			esp_ble_gap_set_device_name(mDeviceHandler->mName);
 		}
 			break;
 		/*!< When gatt client request read operation, the event comes */
@@ -290,7 +291,9 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 			list_iterator_t *iterator = custom_list_iterator_new(mDeviceHandler->mProfileList, LIST_HEAD);
 			list_node_t *item = custom_list_iterator_next(iterator);
 			while (item){
+
 				profile = (ble_profile_t*)item->val;
+				ESP_LOGI(TAG, "profile->mGatt_if %d, gatts_if %d\n", profile->mGatt_if, gatts_if);
 				if(profile->mGatt_if == gatts_if){
 					ESP_LOGI(TAG, "called for profile id:  %d, service id %x", profile->mId, param->create.service_id.id.uuid.uuid.uuid16);
 
@@ -301,10 +304,10 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 					while(item1)
 					{
 						service = (ble_service_t*)item1->val;
-						if(memcmp((void*)&service->service_id->id.uuid.uuid, (void*)&param->create.service_id.id.uuid.uuid, service->service_id->id.uuid.len) == 0 ){
+						if(memcmp((void*)&service->mService_id->id.uuid.uuid, (void*)&param->create.service_id.id.uuid.uuid, service->mService_id->id.uuid.len) == 0 ){
 							ESP_LOGI(TAG, "Service found");
-							service->service_handle = param->create.service_handle;
-							esp_ble_gatts_start_service(service->service_handle);
+							service->mServiceHandle = param->create.service_handle;
+							esp_ble_gatts_start_service(service->mServiceHandle);
 							break;
 						}
 						item1 = custom_list_iterator_next(iterator1);
