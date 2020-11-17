@@ -48,7 +48,9 @@ void wifiEventReciver(void * mMsg)
 	}
 }
 
-uint16_t UUID = 0xFF00;
+uint16_t SERVICE_UUID = 0x00FF;
+uint16_t CHAR_UUID = 0xFF01;
+uint8_t char1_str[] = {0x11,0x22,0x33};
 
 void app_main(void) {
 	esp_err_t ret;
@@ -70,8 +72,15 @@ void app_main(void) {
 	// create default profile
 	profile = BleProfiles_createProfile();
 	BleDevice_addProfile(profile);
-	ble_service_t* service =  BleProfiles_createService(&UUID, 2, 4, true);
+	ble_service_t* service =  BleProfiles_createService((uint8_t*)&SERVICE_UUID, ESP_UUID_LEN_16, 4, true);
 	BleProfiles_addService(profile, service);
+	ble_char_t* ch = BleProfiles_createCharacteristic((uint8_t*)&CHAR_UUID, ESP_UUID_LEN_16, ESP_GATT_AUTO_RSP);
+	BleProfiles_setCharacteristicPermission(ch, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE );
+	BleProfiles_setCharacteristicProperty(ch, (ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE | ESP_GATT_CHAR_PROP_BIT_NOTIFY) );
+	BleProfile_setCharacteristicValue(ch, char1_str, sizeof(char1_str), 0x40);
+	BleProfiles_addCharacteristic(service, ch);
+
+
 	BleDevice_activateProfiles();
 
 

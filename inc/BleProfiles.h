@@ -38,10 +38,10 @@ typedef struct {
 
 typedef struct {
 	uint16_t mChar_handle;
-	esp_bt_uuid_t mChar_uuid;
+	esp_bt_uuid_t *mChar_uuid;
 	esp_gatt_perm_t mPerm;
 	esp_gatt_char_prop_t mProperty;
-	esp_attr_value_t mAtt;
+	esp_attr_value_t *mAtt;
 	esp_attr_control_t mRsp;
 	list_t *mDescrList;
 } ble_char_t;
@@ -56,19 +56,12 @@ typedef struct {
 
 ble_profile_t* BleProfiles_createProfile(void);
 ble_service_t* BleProfiles_createService(uint8_t *uuid, uint8_t len, uint8_t nHandle, bool isPrimary);
-
-
-//ble_char_t* BleProfiles_createCharacteristic(uint8_t *uuid, uint8_t len, uint8_t autoRsp);
-//void BleProfiles_setCharacteristicPermission(ble_char_t *ch, uint16_t pem);
-//void BleProfiles_setCharacteristicProperty(ble_char_t *ch, uint16_t pem);
-//void BleProfile_setCharacteristicValue(ble_char_t *ch, uint8_t *value, uint8_t len, uint8_t maxLen);
-
-
-//ble_descrp_t* BleProfiles_createDescription(esp_bt_uuid_t descr_uuid,
-//		esp_gatt_char_prop_t property);
-
+ble_char_t* BleProfiles_createCharacteristic(uint8_t *uuid, uint8_t len, uint8_t autoRsp);
+void BleProfiles_setCharacteristicPermission(ble_char_t *ch, uint16_t pem);
+void BleProfiles_setCharacteristicProperty(ble_char_t *ch, uint8_t property);
+void BleProfile_setCharacteristicValue(ble_char_t *ch, uint8_t *value, uint8_t len, uint8_t maxLen);
+//ble_descrp_t* BleProfiles_createDescription(esp_bt_uuid_t descr_uuid, esp_gatt_char_prop_t property);
 void BleProfiles_addService(ble_profile_t *pf, ble_service_t *service);
-//void BleProfiles_addCharacteristic(ble_service_t *service,
-//		ble_char_t *characteristic);
+void BleProfiles_addCharacteristic(ble_service_t *service, ble_char_t *characteristic);
 
 #endif /* INC_BLEPROFILES_H_ */

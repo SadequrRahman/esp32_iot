@@ -48,3 +48,52 @@ ble_service_t* BleProfiles_createService(uint8_t *uuid, uint8_t len, uint8_t nHa
 
 	return ns;
 }
+
+ble_char_t* BleProfiles_createCharacteristic(uint8_t *uuid, uint8_t len, uint8_t autoRsp)
+{
+	ble_char_t* ch = (ble_char_t*) malloc(sizeof(ble_char_t));
+	esp_bt_uuid_t* id = (esp_bt_uuid_t*) malloc(sizeof(esp_bt_uuid_t));
+	memset((void*)ch, 0 , sizeof(ble_char_t));
+	memset((void*)id, 0 , sizeof(esp_bt_uuid_t));
+	ch->mDescrList = custom_list_new();
+	id->len = len;
+	memcpy((void*)id->uuid.uuid128, (void*)uuid, len);
+	ch->mChar_uuid = id;
+	ch->mRsp.auto_rsp = autoRsp;
+	return ch;
+}
+
+void BleProfiles_setCharacteristicPermission(ble_char_t *ch, uint16_t pem)
+{
+	if(ch)
+		ch->mPerm = pem;
+}
+
+void BleProfiles_setCharacteristicProperty(ble_char_t *ch, uint8_t property)
+{
+	if(ch)
+		ch->mProperty = property;
+}
+
+void BleProfile_setCharacteristicValue(ble_char_t *ch, uint8_t *value, uint8_t len, uint8_t maxLen)
+{
+	if(ch)
+	{
+		esp_attr_value_t* at = (esp_attr_value_t*) malloc(sizeof(esp_attr_value_t));
+		memset((void*)at, 0, sizeof(esp_attr_value_t));
+		at->attr_len = len;
+		at->attr_max_len = maxLen;
+		at->attr_value = value;
+		ch->mAtt = at;
+	}
+}
+
+void BleProfiles_addCharacteristic(ble_service_t *service, ble_char_t *characteristic)
+{
+	if(service && characteristic)
+	{
+		list_node_t *node = custom_list_node_new((void*)characteristic);
+		custom_list_lpush(service->mCharList, node);
+
+	}
+}

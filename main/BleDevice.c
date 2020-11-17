@@ -296,7 +296,6 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 				ESP_LOGI(TAG, "profile->mGatt_if %d, gatts_if %d\n", profile->mGatt_if, gatts_if);
 				if(profile->mGatt_if == gatts_if){
 					ESP_LOGI(TAG, "called for profile id:  %d, service id %x", profile->mId, param->create.service_id.id.uuid.uuid.uuid16);
-
 					//service iterator
 					ble_service_t* service = (void*)0;
 					list_iterator_t *iterator1 = custom_list_iterator_new(profile->mServiceList, LIST_HEAD);
@@ -305,21 +304,23 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 					{
 						service = (ble_service_t*)item1->val;
 						if(memcmp((void*)&service->mService_id->id.uuid.uuid, (void*)&param->create.service_id.id.uuid.uuid, service->mService_id->id.uuid.len) == 0 ){
-							ESP_LOGI(TAG, "Service found");
 							service->mServiceHandle = param->create.service_handle;
 							esp_ble_gatts_start_service(service->mServiceHandle);
+							ble_char_t* ch = (void*)0;
+							list_iterator_t *iterator2 = custom_list_iterator_new(service->mCharList , LIST_HEAD);
+							list_node_t *item2 = custom_list_iterator_next(iterator2);
+							while(item2)
+							{
+								ch = (ble_char_t*)item2->val;
+								esp_ble_gatts_add_char(service->mServiceHandle, ch->mChar_uuid, ch->mPerm, ch->mProperty,ch->mAtt, &ch->mRsp);
+								item2 = custom_list_iterator_next(iterator2);
+							}
+							custom_list_iterator_destroy(iterator2);
 							break;
 						}
 						item1 = custom_list_iterator_next(iterator1);
 					}
 					custom_list_iterator_destroy(iterator1);
-
-
-
-
-
-
-
 					break;
 				}
 				item = custom_list_iterator_next(iterator);
