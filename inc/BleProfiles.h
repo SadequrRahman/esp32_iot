@@ -60,8 +60,11 @@ ble_char_t* BleProfiles_createCharacteristic(uint8_t *uuid, uint8_t len, uint8_t
 void BleProfiles_setCharacteristicPermission(ble_char_t *ch, uint16_t pem);
 void BleProfiles_setCharacteristicProperty(ble_char_t *ch, uint8_t property);
 void BleProfile_setCharacteristicValue(ble_char_t *ch, uint8_t *value, uint8_t len, uint8_t maxLen);
-//ble_descrp_t* BleProfiles_createDescription(esp_bt_uuid_t descr_uuid, esp_gatt_char_prop_t property);
 void BleProfiles_addService(ble_profile_t *pf, ble_service_t *service);
 void BleProfiles_addCharacteristic(ble_service_t *service, ble_char_t *characteristic);
+
+//ble_descrp_t* BleProfiles_createDescription(uint8_t *uuid, uint8_t uuidLen, esp_gatt_char_prop_t property);
+
+
 
 #endif /* INC_BLEPROFILES_H_ */

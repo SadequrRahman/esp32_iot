@@ -19,11 +19,8 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event,
 static void gatts_event_handler(esp_gatts_cb_event_t event,
 		esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 
-static uint8_t adv_service_uuid128[16] = {
-		/* LSB <--------------------------------------------------------------------------------> MSB */
-		//first uuid, 16bit, [12],[13] is the value
-		0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00,
-		0x09, 0x18, 0x00, 0x00, };
+static uint8_t adv_service_uuid128[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0A, 0x89, 0x78, 0x67, 0x56, 0x45, 0x34, 0x23, 0x12 };
+//{0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0x09, 0x18, 0x00, 0x00 };
 
 
 
@@ -86,11 +83,15 @@ void BleDevice_init(char *pName, bleDevice_config_t *config)
 			ESP_LOGE(TAG, "set local  MTU failed, error code = %x", local_mtu_ret);
 		}
 		ESP_LOGI(TAG, "Local mtu set to 512");
+		ret = esp_ble_gap_set_device_name(mDeviceHandler->mName);
+		if (ret) {
+			ESP_LOGE(TAG, "Set device name failed, error code = %x", ret);
+		}
 		ret = esp_ble_gap_config_adv_data(&mDeviceHandler->mConfig->mAdvData);
 		if (ret) {
 			ESP_LOGE(TAG, "config adv data failed, error code = %x", ret);
 		}
-		esp_ble_gap_set_device_name(mDeviceHandler->mName);
+
 	}
 
 }
@@ -179,6 +180,7 @@ void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
 	switch (event) {
 	case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT:
 		esp_ble_gap_start_advertising(&mDeviceHandler->mConfig->mAdvParams);
+		esp_ble_gap_set_device_name(mDeviceHandler->mName);
 		break;
 	case ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT:
 		ESP_LOGI(TAG, "ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT");
@@ -295,7 +297,6 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 				profile = (ble_profile_t*)item->val;
 				ESP_LOGI(TAG, "profile->mGatt_if %d, gatts_if %d\n", profile->mGatt_if, gatts_if);
 				if(profile->mGatt_if == gatts_if){
-					ESP_LOGI(TAG, "called for profile id:  %d, service id %x", profile->mId, param->create.service_id.id.uuid.uuid.uuid16);
 					//service iterator
 					ble_service_t* service = (void*)0;
 					list_iterator_t *iterator1 = custom_list_iterator_new(profile->mServiceList, LIST_HEAD);
@@ -305,6 +306,7 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 						service = (ble_service_t*)item1->val;
 						if(memcmp((void*)&service->mService_id->id.uuid.uuid, (void*)&param->create.service_id.id.uuid.uuid, service->mService_id->id.uuid.len) == 0 ){
 							service->mServiceHandle = param->create.service_handle;
+							ESP_LOGI(TAG, "\r\nStart service: %d\r\n", service->mService_id->id.inst_id);
 							esp_ble_gatts_start_service(service->mServiceHandle);
 							ble_char_t* ch = (void*)0;
 							list_iterator_t *iterator2 = custom_list_iterator_new(service->mCharList , LIST_HEAD);
@@ -334,7 +336,9 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 			ESP_LOGI(TAG, "ESP_GATTS_ADD_INCL_SRVC_EVT");
 			break;
 		case ESP_GATTS_ADD_CHAR_EVT:                   /*!< When add characteristic complete, the event comes */
-			ESP_LOGI(TAG, "ESP_GATTS_ADD_CHAR_EVT");
+
+			ESP_LOGI(TAG, "ESP_GATTS_ADD_CHAR_EVT.\r\nSerive Handle: %d\r\n", param->add_char.service_handle);
+
 			break;
 		case ESP_GATTS_ADD_CHAR_DESCR_EVT:            /*!< When add descriptor complete, the event comes */
 			ESP_LOGI(TAG, "ESP_GATTS_ADD_CHAR_DESCR_EVT");

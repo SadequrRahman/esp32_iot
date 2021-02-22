@@ -16,10 +16,9 @@ ble_profile_t* BleProfiles_createProfile(void)
 	ble_profile_t* np = (ble_profile_t*) malloc(sizeof(ble_profile_t));
 	memset((void*)np, 0 , sizeof(ble_profile_t));
 	np->mGatt_if = ESP_GATT_IF_NONE;
-	np->mId = mProfileId;
+	np->mId = mProfileId++;
 	np->mGatts_cb = (void*)0;
 	np->mServiceList = custom_list_new();
-	mProfileId++;
 	return np;
 }
 
@@ -33,6 +32,12 @@ void BleProfiles_addService(ble_profile_t *pf, ble_service_t *service)
 	}
 }
 
+/*
+ * nHandle  there are three characteristic in a service, where the first characteristic has two descriptors,
+ * and the second characteristic has only one descriptor, and the third characteristic has no descriptor.
+ * Then the number of handles needed should be
+ * 1 (svc attr) + 4 (1 char declaration attr, 1 char value attr, 2 descriptors attr) + 3 (1 char declaration attr, 1 char value attr, 1 Descriptor attr) + 2 (1 char declaration attr, 1 char value attr) = 10
+ */
 
 ble_service_t* BleProfiles_createService(uint8_t *uuid, uint8_t len, uint8_t nHandle, bool isPrimary)
 {
@@ -97,3 +102,13 @@ void BleProfiles_addCharacteristic(ble_service_t *service, ble_char_t *character
 
 	}
 }
+
+
+//ble_descrp_t* BleProfiles_createDescription(uint8_t *uuid, uint8_t uuidLen, esp_gatt_char_prop_t property)
+//{
+//	ble_descrp_t* ds = (ble_descrp_t*) malloc(sizeof(ble_descrp_t));
+//	memset((void*)ds, 0, sizeof(ble_descrp_t));
+//	memcpy((void*)ds->mDescr_uuid.uuid.uuid128, (void*)uuid, uuidLen);
+//
+//	return ds;
+//}
