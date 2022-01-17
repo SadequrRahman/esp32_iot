@@ -56,6 +56,9 @@ uint8_t CHAR_UUID1[] = {0x00, 0x00, 0x00, 0x03, 0x10, 0x00, 0x20, 0x00, 0x30, 0x
 uint8_t char1_str1[] = "Second Char";
 
 
+uint8_t DES_UUID[] = {0x00, 0x00, 0x00, 0x04, 0x10, 0x00, 0x20, 0x00, 0x30, 0x00, 0x11, 0x11, 0x22, 0x22, 0x33, 0x33};
+uint8_t desValue[] = "This is a test description";
+
 void app_main(void) {
 	esp_err_t ret;
 	/* Initialize NVS. */
@@ -92,8 +95,14 @@ void app_main(void) {
 	BleProfile_setCharacteristicValue(ch1, char1_str1, sizeof(char1_str1), 0x40);
 
 
+	//
+	ble_descrp_t* des = BleProfiles_createDescription((uint8_t*)&DES_UUID, ESP_UUID_LEN_128, ESP_GATT_AUTO_RSP);
+	BleProfiles_setDescriptionPermission(des, ESP_GATT_PERM_READ );
+	BleProfile_setDescriptionValue(des, desValue, sizeof(desValue), 0x40);
+
 	BleProfiles_addCharacteristic(service, ch);
 	BleProfiles_addCharacteristic(service, ch1);
+	BleProfiles_addDescription(ch,des);
 	BleDevice_activateProfiles();
 
 

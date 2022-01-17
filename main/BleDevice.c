@@ -19,7 +19,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event,
 static void gatts_event_handler(esp_gatts_cb_event_t event,
 		esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 
-static uint8_t adv_service_uuid128[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0A, 0x89, 0x78, 0x67, 0x56, 0x45, 0x34, 0x23, 0x12 };
+static uint8_t defaultAdvUUID128[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0A, 0x89, 0x78, 0x67, 0x56, 0x45, 0x34, 0x23, 0x12 };
 //{0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0x09, 0x18, 0x00, 0x00 };
 
 
@@ -117,8 +117,8 @@ bleDevice_config_t* BleDevice_getDefaultConfig(void)
 	config->mAdvData.p_manufacturer_data = NULL;
 	config->mAdvData.service_data_len = 0;
 	config->mAdvData.p_service_data = NULL;
-	config->mAdvData.service_uuid_len = sizeof(adv_service_uuid128);
-	config->mAdvData.p_service_uuid = adv_service_uuid128;
+	config->mAdvData.service_uuid_len = sizeof(defaultAdvUUID128);
+	config->mAdvData.p_service_uuid = defaultAdvUUID128;
 	config->mAdvData.flag = (ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT);
 	// adv params
 	config->mAdvParams.adv_int_min = 0x20;
@@ -296,7 +296,8 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 
 				profile = (ble_profile_t*)item->val;
 				ESP_LOGI(TAG, "profile->mGatt_if %d, gatts_if %d\n", profile->mGatt_if, gatts_if);
-				if(profile->mGatt_if == gatts_if){
+				if(profile->mGatt_if == gatts_if)
+				{
 					//service iterator
 					ble_service_t* service = (void*)0;
 					list_iterator_t *iterator1 = custom_list_iterator_new(profile->mServiceList, LIST_HEAD);
@@ -304,7 +305,10 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 					while(item1)
 					{
 						service = (ble_service_t*)item1->val;
-						if(memcmp((void*)&service->mService_id->id.uuid.uuid, (void*)&param->create.service_id.id.uuid.uuid, service->mService_id->id.uuid.len) == 0 ){
+						if(memcmp((void*)&service->mService_id->id.uuid.uuid,
+								(void*)&param->create.service_id.id.uuid.uuid,
+								service->mService_id->id.uuid.len) == 0 )
+						{
 							service->mServiceHandle = param->create.service_handle;
 							ESP_LOGI(TAG, "\r\nStart service: %d\r\n", service->mService_id->id.inst_id);
 							esp_ble_gatts_start_service(service->mServiceHandle);
@@ -336,12 +340,77 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 			ESP_LOGI(TAG, "ESP_GATTS_ADD_INCL_SRVC_EVT");
 			break;
 		case ESP_GATTS_ADD_CHAR_EVT:                   /*!< When add characteristic complete, the event comes */
-
+		{
 			ESP_LOGI(TAG, "ESP_GATTS_ADD_CHAR_EVT.\r\nSerive Handle: %d\r\n", param->add_char.service_handle);
+			uint16_t length = 0;
+		    const uint8_t *prf_char;
+			esp_err_t get_attr_ret = esp_ble_gatts_get_attr_value(param->add_char.attr_handle, &length, &prf_char);
+			if (get_attr_ret == ESP_FAIL)
+			{
+			   ESP_LOGE(TAG, "ILLEGAL HANDLE");
+			}
 
+			ble_profile_t* profile = (void*)0;
+			list_iterator_t *iterator = custom_list_iterator_new(mDeviceHandler->mProfileList, LIST_HEAD);
+			list_node_t *item = custom_list_iterator_next(iterator);
+			while (item){
+				profile = (ble_profile_t*)item->val;
+				if(profile->mGatt_if == gatts_if)
+				{
+					ble_service_t* service = (void*)0;
+					list_iterator_t *iterator1 = custom_list_iterator_new(profile->mServiceList, LIST_HEAD);
+					list_node_t *item1 = custom_list_iterator_next(iterator1);
+					while(item1)
+					{
+						service = (ble_service_t*)item1->val;
+						if(service->mServiceHandle == param->add_char.service_handle)
+						{
+							ble_char_t* characteristic = (void*)0;
+							list_iterator_t *iterator2 = custom_list_iterator_new(service->mCharList, LIST_HEAD);
+							list_node_t *item2 = custom_list_iterator_next(iterator2);
+							while(item2)
+							{
+								characteristic = (ble_char_t*) item2->val;
+								if(memcmp((void*)&characteristic->mChar_uuid->uuid,
+									(void*)&param->add_char.char_uuid.uuid,
+									characteristic->mChar_uuid->len) == 0 )
+								{
+									characteristic->mChar_handle = param->add_char.attr_handle;
+									ESP_LOGI(TAG, "Found char.Assigned handle id: %d\r\n", characteristic->mChar_handle);
+									ble_descrp_t* descrp = (void*)0;
+									list_iterator_t *iterator3 = custom_list_iterator_new(characteristic->mDescrList, LIST_HEAD);
+									list_node_t *item3 = custom_list_iterator_next(iterator3);
+									while(item3)
+									{
+										descrp = (ble_descrp_t*)item3->val;
+										esp_err_t add_descr_ret = esp_ble_gatts_add_char_descr( service->mServiceHandle,  descrp->mDescr_uuid,
+										            											descrp->mPerm, descrp->mAtt, &descrp->mRsp);
+										 if (add_descr_ret)
+										 {
+											ESP_LOGE(TAG, "add char descr failed, error code = %x", add_descr_ret);
+										 }
+										item3 = custom_list_iterator_next(iterator3);
+									}
+									custom_list_iterator_destroy(iterator3);
+								}
+								item2 = custom_list_iterator_next(iterator2);
+							}
+							custom_list_iterator_destroy(iterator2);
+						}
+						item1 = custom_list_iterator_next(iterator1);
+					}
+					custom_list_iterator_destroy(iterator1);
+				}
+				item = custom_list_iterator_next(iterator);
+			}
+			custom_list_iterator_destroy(iterator);
+
+		}
 			break;
 		case ESP_GATTS_ADD_CHAR_DESCR_EVT:            /*!< When add descriptor complete, the event comes */
-			ESP_LOGI(TAG, "ESP_GATTS_ADD_CHAR_DESCR_EVT");
+			ESP_LOGI(TAG, "ADD_DESCR_EVT, status %d, attr_handle %d, service_handle %d\n",
+			                  param->add_char.status, param->add_char.attr_handle,
+			                  param->add_char.service_handle);
 			break;
 		case ESP_GATTS_DELETE_EVT:                    /*!< When delete service complete, the event comes */
 			ESP_LOGI(TAG, "ESP_GATTS_DELETE_EVT");

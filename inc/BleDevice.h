@@ -36,6 +36,18 @@ typedef struct{
 }bleDevice_handler_t;
 
 
+typedef enum{
+	connect_event,
+	disconnnect_event
+}BLE_EVENT_ID;
+
+typedef struct {
+
+}ble_event_t;
+
+typedef void(*event_handler)(ble_event_t *param);
+
+
 
 // init the ble device with device name
 void BleDevice_init(char* pName, bleDevice_config_t* config);

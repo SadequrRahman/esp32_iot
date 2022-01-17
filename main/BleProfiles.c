@@ -104,11 +104,44 @@ void BleProfiles_addCharacteristic(ble_service_t *service, ble_char_t *character
 }
 
 
-//ble_descrp_t* BleProfiles_createDescription(uint8_t *uuid, uint8_t uuidLen, esp_gatt_char_prop_t property)
-//{
-//	ble_descrp_t* ds = (ble_descrp_t*) malloc(sizeof(ble_descrp_t));
-//	memset((void*)ds, 0, sizeof(ble_descrp_t));
-//	memcpy((void*)ds->mDescr_uuid.uuid.uuid128, (void*)uuid, uuidLen);
-//
-//	return ds;
-//}
+ble_descrp_t* BleProfiles_createDescription(uint8_t *uuid, uint8_t uuidLen, uint8_t autoRsp)
+{
+	ble_descrp_t* ds = (ble_descrp_t*) malloc(sizeof(ble_descrp_t));
+	esp_bt_uuid_t* id = (esp_bt_uuid_t*) malloc(sizeof(esp_bt_uuid_t));
+	memset((void*)ds, 0, sizeof(ble_descrp_t));
+	memset((void*)id, 0 , sizeof(esp_bt_uuid_t));
+	id->len = uuidLen;
+	memcpy((void*)id->uuid.uuid128, (void*)uuid, id->len);
+	ds->mRsp.auto_rsp = autoRsp;
+	ds->mDescr_uuid = id;
+	return ds;
+}
+
+void BleProfiles_setDescriptionPermission(ble_descrp_t *ds, uint16_t pem)
+{
+	if(ds)
+		ds->mPerm = pem;
+}
+
+
+void BleProfile_setDescriptionValue(ble_descrp_t *ds, uint8_t *value, uint8_t len, uint8_t maxLen)
+{
+	if(ds)
+	{
+		esp_attr_value_t* at = (esp_attr_value_t*) malloc(sizeof(esp_attr_value_t));
+		memset((void*)at, 0, sizeof(esp_attr_value_t));
+		at->attr_len = len;
+		at->attr_max_len = maxLen;
+		at->attr_value = value;
+		ds->mAtt = at;
+	}
+}
+
+void BleProfiles_addDescription(ble_char_t *charactersitic, ble_descrp_t *ds)
+{
+	if(charactersitic && ds)
+		{
+			list_node_t *node = custom_list_node_new((void*)ds);
+			custom_list_lpush(charactersitic->mDescrList, node);
+		}
+}

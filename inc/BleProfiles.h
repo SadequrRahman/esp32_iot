@@ -48,8 +48,9 @@ typedef struct {
 
 typedef struct {
 	uint16_t mDescr_handle;
-	esp_bt_uuid_t mDescr_uuid;
-	esp_attr_value_t mAtt;
+	esp_bt_uuid_t *mDescr_uuid;
+	esp_attr_value_t *mAtt;
+	esp_gatt_perm_t mPerm;
 	esp_attr_control_t mRsp;
 } ble_descrp_t;
 
@@ -63,8 +64,9 @@ void BleProfile_setCharacteristicValue(ble_char_t *ch, uint8_t *value, uint8_t l
 void BleProfiles_addService(ble_profile_t *pf, ble_service_t *service);
 void BleProfiles_addCharacteristic(ble_service_t *service, ble_char_t *characteristic);
 
-//ble_descrp_t* BleProfiles_createDescription(uint8_t *uuid, uint8_t uuidLen, esp_gatt_char_prop_t property);
-
-
+ble_descrp_t* BleProfiles_createDescription(uint8_t *uuid, uint8_t uuidLen, uint8_t autoRsp);
+void BleProfiles_setDescriptionPermission(ble_descrp_t *ds, uint16_t pem);
+void BleProfile_setDescriptionValue(ble_descrp_t *ds, uint8_t *value, uint8_t len, uint8_t maxLen);
+void BleProfiles_addDescription(ble_char_t *charactersitic, ble_descrp_t *ds);
 
 #endif /* INC_BLEPROFILES_H_ */
