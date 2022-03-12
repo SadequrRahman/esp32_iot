@@ -18,7 +18,7 @@ ble_profile_t* BleProfiles_createProfile(void)
 	np->mGatt_if = ESP_GATT_IF_NONE;
 	np->mId = mProfileId++;
 	np->mGatts_cb = (void*)0;
-	np->mServiceList = custom_list_new();
+	np->mServiceList = uList_createList();
 	return np;
 }
 
@@ -27,8 +27,8 @@ void BleProfiles_addService(ble_profile_t *pf, ble_service_t *service)
 {
 	if(pf != 0 && service!= 0)
 	{
-		list_node_t *node = custom_list_node_new((void*)service);
-		custom_list_lpush(pf->mServiceList, node);
+		uNode_t *node = uList_createNode((void*)service, sizeof(ble_service_t), NODE_NON_SELF_ALLOC);
+		uList_append(pf->mServiceList, node);
 	}
 }
 
@@ -43,7 +43,7 @@ ble_service_t* BleProfiles_createService(uint8_t *uuid, uint8_t len, uint8_t nHa
 {
 	ble_service_t* ns = (ble_service_t*) malloc(sizeof(ble_service_t));
 	memset((void*)ns, 0 , sizeof(ble_service_t));
-	ns->mCharList = custom_list_new();
+	ns->mCharList = uList_createList();
 	ns->mService_id = (esp_gatt_srvc_id_t*) malloc(sizeof(esp_gatt_srvc_id_t));
 	memset((void*)ns->mService_id, 0 , sizeof(esp_gatt_srvc_id_t));
 	memcpy((void*)ns->mService_id->id.uuid.uuid.uuid128,(void*)uuid, len);
@@ -60,7 +60,7 @@ ble_char_t* BleProfiles_createCharacteristic(uint8_t *uuid, uint8_t len, uint8_t
 	esp_bt_uuid_t* id = (esp_bt_uuid_t*) malloc(sizeof(esp_bt_uuid_t));
 	memset((void*)ch, 0 , sizeof(ble_char_t));
 	memset((void*)id, 0 , sizeof(esp_bt_uuid_t));
-	ch->mDescrList = custom_list_new();
+	ch->mDescrList = uList_createList();
 	id->len = len;
 	memcpy((void*)id->uuid.uuid128, (void*)uuid, len);
 	ch->mChar_uuid = id;
@@ -97,9 +97,8 @@ void BleProfiles_addCharacteristic(ble_service_t *service, ble_char_t *character
 {
 	if(service && characteristic)
 	{
-		list_node_t *node = custom_list_node_new((void*)characteristic);
-		custom_list_lpush(service->mCharList, node);
-
+		uNode_t *node = uList_createNode((void*)characteristic, sizeof(ble_char_t), NODE_NON_SELF_ALLOC);
+		uList_append(service->mCharList, node);
 	}
 }
 
@@ -141,7 +140,7 @@ void BleProfiles_addDescription(ble_char_t *charactersitic, ble_descrp_t *ds)
 {
 	if(charactersitic && ds)
 		{
-			list_node_t *node = custom_list_node_new((void*)ds);
-			custom_list_lpush(charactersitic->mDescrList, node);
+			uNode_t *node = uList_createNode((void*)ds, sizeof(ble_descrp_t), NODE_NON_SELF_ALLOC);
+			uList_append(charactersitic->mDescrList, node);
 		}
 }

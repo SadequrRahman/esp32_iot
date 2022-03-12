@@ -14,7 +14,7 @@
 #include "esp_log.h"
 #include "freertos/event_groups.h"
 #include "heartBeat.h"
-#include "wifi_driver.h"
+//#include "wifi_driver.h"
 #include "esp_websocket_client.h"
 #include "mqtt_manager.h"
 #include "MessageQueue.h"
@@ -29,24 +29,24 @@ bleDevice_config_t *conf = (void*)0;
 
 
 
-void wifiEventReciver(void * mMsg)
-{
-	wifiDriver_Msg_t *msg = (wifiDriver_Msg_t*)mMsg;
-	switch (msg->eventId) {
-		case WIFI_STATION_CONNECTED:
-			ESP_LOGI(TAG, "wifi station is connected");
-			break;
-		case WIFI_CONNECTED:
-			ESP_LOGI(TAG, "wifi gots ip: %s", ip4addr_ntoa(&msg->ipInfo.ip));
-			mqtt_app_start();
-			break;
-		case WIFI_DISCONNECTED:
-			ESP_LOGI(TAG, "wifi is disconnected");
-			break;
-		default:
-			break;
-	}
-}
+// void wifiEventReciver(void * mMsg)
+// {
+// 	wifiDriver_Msg_t *msg = (wifiDriver_Msg_t*)mMsg;
+// 	switch (msg->eventId) {
+// 		case WIFI_STATION_CONNECTED:
+// 			ESP_LOGI(TAG, "wifi station is connected");
+// 			break;
+// 		case WIFI_CONNECTED:
+// 			ESP_LOGI(TAG, "wifi gots ip: %s", ip4addr_ntoa(&msg->ipInfo.ip));
+// 			mqtt_app_start();
+// 			break;
+// 		case WIFI_DISCONNECTED:
+// 			ESP_LOGI(TAG, "wifi is disconnected");
+// 			break;
+// 		default:
+// 			break;
+// 	}
+// }
 
 uint8_t SERVICE_UUID[] = {0x00, 0x00, 0x00, 0x01, 0x10, 0x00, 0x20, 0x00, 0x30, 0x00, 0x11, 0x11, 0x22, 0x22, 0x33, 0x33};
 uint8_t CHAR_UUID[] = {0x00, 0x00, 0x00, 0x02, 0x10, 0x00, 0x20, 0x00, 0x30, 0x00, 0x11, 0x11, 0x22, 0x22, 0x33, 0x33};

@@ -2,7 +2,8 @@
  * BleDevice.c
  *
  *  Created on: 14 Nov 2020
- *      Author: Rabby
+ *  Author: Mohammad Sadequr Rahman
+ *  Email: sadequr.rahman.rabby@gmnail.com 
  */
 
 
@@ -32,7 +33,7 @@ void BleDevice_init(char *pName, bleDevice_config_t *config)
 		memset((void*)mDeviceHandler, 0, sizeof(bleDevice_handler_t));
 		mDeviceHandler->mName = pName;
 		mDeviceHandler->mProfileCount = 0;
-		mDeviceHandler->mProfileList = custom_list_new();
+		mDeviceHandler->mProfileList =  uList_createList();
 		mDeviceHandler->mConfig = config;
 		// start init the ESP specific
 		esp_err_t ret;
@@ -140,8 +141,8 @@ void BleDevice_addProfile(ble_profile_t* pProfile)
 {
 	if(pProfile!=0 && mDeviceHandler!=0)
 	{
-		list_node_t *node = custom_list_node_new((void*)pProfile);
-		custom_list_lpush(mDeviceHandler->mProfileList, node);
+		uNode_t *node = uList_createNode((void*)pProfile, sizeof(ble_profile_t),NODE_NON_SELF_ALLOC);
+		uList_append(mDeviceHandler->mProfileList, node);
 		mDeviceHandler->mProfileCount++;
 	}
 
@@ -152,11 +153,11 @@ void BleDevice_activateProfiles(void)
 	if(mDeviceHandler)
 	{
 		ble_profile_t* profile = (void*)0;
-		list_iterator_t *iterator = custom_list_iterator_new(mDeviceHandler->mProfileList, LIST_HEAD);
-		list_node_t *item = custom_list_iterator_next(iterator);
-		while (item)
+		uNode_t * profileNode = mDeviceHandler->mProfileList->tail;
+		while (profileNode)
 		{
-			profile = (ble_profile_t*)item->val;
+			/* code */
+			profile = (ble_profile_t*)profileNode->value;
 			esp_err_t ret = esp_ble_gatts_app_register(profile->mId);
 			if (ret)
 			{
@@ -166,10 +167,8 @@ void BleDevice_activateProfiles(void)
 			{
 				ESP_LOGI(TAG, "gatts app registered. id: %d", profile->mId);
 			}
-
-			item = custom_list_iterator_next(iterator);
+			profileNode = profileNode->nextNode;
 		}
-		custom_list_iterator_destroy(iterator);
 	}
 }
 
@@ -177,52 +176,57 @@ void BleDevice_activateProfiles(void)
 
 void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
-	switch (event) {
-	case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT:
-		esp_ble_gap_start_advertising(&mDeviceHandler->mConfig->mAdvParams);
-		esp_ble_gap_set_device_name(mDeviceHandler->mName);
-		break;
-	case ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT:
-		ESP_LOGI(TAG, "ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT");
-		esp_ble_gap_start_advertising(&mDeviceHandler->mConfig->mAdvParams);
-		break;
-	case ESP_GAP_BLE_ADV_START_COMPLETE_EVT:
-		//advertising start complete event to indicate advertising start successfully or failed
-		if (param->adv_start_cmpl.status != ESP_BT_STATUS_SUCCESS) {
-			ESP_LOGE(TAG, "Advertising start failed\n");
-		} else {
-			ESP_LOGI(TAG, "Ble Advertising");
-		}
-
-		break;
-	case ESP_GAP_BLE_ADV_STOP_COMPLETE_EVT:
-		if (param->adv_stop_cmpl.status != ESP_BT_STATUS_SUCCESS) {
-			ESP_LOGE(TAG, "Advertising stop failed\n");
-		} else {
-			ESP_LOGI(TAG, "Stop adv successfully\n");
-		}
-		break;
-	case ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT:
-		ESP_LOGI(TAG,
-				"update connection params status = %d, min_int = %d, max_int = %d,conn_int = %d,latency = %d, timeout = %d",
-				param->update_conn_params.status,
-				param->update_conn_params.min_int,
-				param->update_conn_params.max_int,
-				param->update_conn_params.conn_int,
-				param->update_conn_params.latency,
-				param->update_conn_params.timeout);
-		break;
-	case ESP_GAP_BLE_GET_BOND_DEV_COMPLETE_EVT:
-		ESP_LOGI(TAG, "ESP_GAP_BLE_GET_BOND_DEV_COMPLETE_EVT");
-		break;
-	case ESP_GAP_BLE_CLEAR_BOND_DEV_COMPLETE_EVT:
-		ESP_LOGI(TAG, "ESP_GAP_BLE_CLEAR_BOND_DEV_COMPLETE_EVT");
-		break;
-	case ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT:
-		ESP_LOGI(TAG, "ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT");
-		break;
-	default:
-		break;
+	switch (event) 
+	{
+		case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT:
+			esp_ble_gap_start_advertising(&mDeviceHandler->mConfig->mAdvParams);
+			esp_ble_gap_set_device_name(mDeviceHandler->mName);
+			break;
+		case ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT:
+			ESP_LOGI(TAG, "ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT");
+			esp_ble_gap_start_advertising(&mDeviceHandler->mConfig->mAdvParams);
+			break;
+		case ESP_GAP_BLE_ADV_START_COMPLETE_EVT:
+			//advertising start complete event to indicate advertising start successfully or failed
+			if (param->adv_start_cmpl.status != ESP_BT_STATUS_SUCCESS) 
+			{
+				ESP_LOGE(TAG, "Advertising start failed\n");
+			} else 
+			{
+				ESP_LOGI(TAG, "Ble Advertising");
+			}
+			break;
+		case ESP_GAP_BLE_ADV_STOP_COMPLETE_EVT:
+			if (param->adv_stop_cmpl.status != ESP_BT_STATUS_SUCCESS) 
+			{
+				ESP_LOGE(TAG, "Advertising stop failed\n");
+			} else 
+			{
+				ESP_LOGI(TAG, "Stop adv successfully\n");
+			}
+			break;
+		case ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT:
+			ESP_LOGI(TAG,
+			"update connection params status = %d, min_int = %d, max_int = %d,conn_int = %d,latency = %d, timeout = %d",
+			param->update_conn_params.status,
+			param->update_conn_params.min_int,
+			param->update_conn_params.max_int,
+			param->update_conn_params.conn_int,
+			param->update_conn_params.latency,
+			param->update_conn_params.timeout);
+			break;
+		case ESP_GAP_BLE_GET_BOND_DEV_COMPLETE_EVT:
+			ESP_LOGI(TAG, "ESP_GAP_BLE_GET_BOND_DEV_COMPLETE_EVT");
+			break;
+		case ESP_GAP_BLE_CLEAR_BOND_DEV_COMPLETE_EVT:
+			ESP_LOGI(TAG, "ESP_GAP_BLE_CLEAR_BOND_DEV_COMPLETE_EVT");
+			break;
+		case ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT:
+			ESP_LOGI(TAG, "ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT");
+			break;
+		default:
+			break;
+		
 	}
 }
 
@@ -231,47 +235,42 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 {
 	switch (event)
 	{
-		/*!< When register application id, the event comes */
-		case ESP_GATTS_REG_EVT:
+		case ESP_GATTS_REG_EVT: /*!< When register application id, the event comes */
 		{
 			ESP_LOGI(TAG, "ESP_GATTS_REG_EVT");
 			ble_profile_t* profile = (void*)0;
-			list_iterator_t *iterator = custom_list_iterator_new(mDeviceHandler->mProfileList, LIST_HEAD);
-			list_node_t *item = custom_list_iterator_next(iterator);
-			while (item)
+			// tail is the starting node of the list
+			uNode_t *profileNode = mDeviceHandler->mProfileList->tail;
+			while (profileNode)
 			{
-				profile = (ble_profile_t*)item->val;
+				profile = (ble_profile_t*)profileNode->value;
 				ESP_LOGI(TAG, "Profile ID %d", profile->mId);
 				if(param->reg.app_id == profile->mId)
 				{
 					ESP_LOGI(TAG, "Found profile index. setting gatts if");
 					profile->mGatt_if = gatts_if;
 					ESP_LOGI(TAG, "profile->mGatt_if %d, gatts_if %d\n", profile->mGatt_if, gatts_if);
-					ble_service_t* service = (void*)0;
-					list_iterator_t *iterator1 = custom_list_iterator_new(profile->mServiceList, LIST_HEAD);
-					list_node_t *item1 = custom_list_iterator_next(iterator1);
-					while(item1)
+					ble_service_t * service = NULL;
+					uNode_t *serviceNode =  profile->mServiceList->tail;
+					while (serviceNode)
 					{
-						service = (ble_service_t*)item1->val;
+						/* code */
+						service = (ble_service_t*) serviceNode->value;
 						ESP_LOGI(TAG, "Adding services to profile %d", profile->mId );
 						esp_ble_gatts_create_service(profile->mGatt_if, service->mService_id, service->mNumHandle);
-						item1 = custom_list_iterator_next(iterator1);
+						serviceNode = serviceNode->nextNode;
 					}
-					custom_list_iterator_destroy(iterator1);
-					break;
 				}
-				item = custom_list_iterator_next(iterator);
+				// go to next node
+				profileNode = profileNode->nextNode;
 			}
-			custom_list_iterator_destroy(iterator);
 		}
 			break;
-		/*!< When gatt client request read operation, the event comes */
-		case ESP_GATTS_READ_EVT:
+		case ESP_GATTS_READ_EVT:			/*!< When gatt client request read operation, the event comes */
 			ESP_LOGI(TAG, "ESP_GATTS_READ_EVT");
 			break;
-		/*!< When gatt client request write operation, the event comes */
-		case ESP_GATTS_WRITE_EVT:
-			ESP_LOGI(TAG, "ESP_GATTS_WRITE_EVT");
+		case ESP_GATTS_WRITE_EVT:			/*!< When gatt client request write operation, the event comes */
+			ESP_LOGI(TAG, "ESP_GATTS_WRITE_EVT");		
 			break;
 		case ESP_GATTS_EXEC_WRITE_EVT:                 /*!< When gatt client request execute write, the event comes */
 			ESP_LOGI(TAG, "ESP_GATTS_EXEC_WRITE_EVT");
@@ -290,21 +289,20 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 			ESP_LOGI(TAG, "CREATE_SERVICE_EVT, status %d, service_handle %d\n", param->create.status, param->create.service_handle);
 
 			ble_profile_t* profile = (void*)0;
-			list_iterator_t *iterator = custom_list_iterator_new(mDeviceHandler->mProfileList, LIST_HEAD);
-			list_node_t *item = custom_list_iterator_next(iterator);
-			while (item){
-
-				profile = (ble_profile_t*)item->val;
+			uNode_t* profileNode = mDeviceHandler->mProfileList->tail;
+			while (profileNode)
+			{
+				/* code */
+				profile = (ble_profile_t*)profileNode->value;
 				ESP_LOGI(TAG, "profile->mGatt_if %d, gatts_if %d\n", profile->mGatt_if, gatts_if);
 				if(profile->mGatt_if == gatts_if)
 				{
-					//service iterator
 					ble_service_t* service = (void*)0;
-					list_iterator_t *iterator1 = custom_list_iterator_new(profile->mServiceList, LIST_HEAD);
-					list_node_t *item1 = custom_list_iterator_next(iterator1);
-					while(item1)
+					uNode_t * serviceNode = profile->mServiceList->tail;
+					while (serviceNode)
 					{
-						service = (ble_service_t*)item1->val;
+						/* code */
+						service = (ble_service_t*)serviceNode->value;
 						if(memcmp((void*)&service->mService_id->id.uuid.uuid,
 								(void*)&param->create.service_id.id.uuid.uuid,
 								service->mService_id->id.uuid.len) == 0 )
@@ -313,27 +311,19 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 							ESP_LOGI(TAG, "\r\nStart service: %d\r\n", service->mService_id->id.inst_id);
 							esp_ble_gatts_start_service(service->mServiceHandle);
 							ble_char_t* ch = (void*)0;
-							list_iterator_t *iterator2 = custom_list_iterator_new(service->mCharList , LIST_HEAD);
-							list_node_t *item2 = custom_list_iterator_next(iterator2);
-							while(item2)
+							uNode_t * charNode = service->mCharList->tail;
+							while(charNode)
 							{
-								ch = (ble_char_t*)item2->val;
+								ch = (ble_char_t*)charNode->value;
 								esp_ble_gatts_add_char(service->mServiceHandle, ch->mChar_uuid, ch->mPerm, ch->mProperty,ch->mAtt, &ch->mRsp);
-								item2 = custom_list_iterator_next(iterator2);
+								charNode = charNode->nextNode;
 							}
-							custom_list_iterator_destroy(iterator2);
-							break;
 						}
-						item1 = custom_list_iterator_next(iterator1);
+						serviceNode = serviceNode->nextNode;
 					}
-					custom_list_iterator_destroy(iterator1);
-					break;
 				}
-				item = custom_list_iterator_next(iterator);
+				profileNode = profileNode->nextNode;
 			}
-			custom_list_iterator_destroy(iterator);
-
-
 		}
 			break;
 		case ESP_GATTS_ADD_INCL_SRVC_EVT:              /*!< When add included service complete, the event comes */
@@ -349,28 +339,28 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 			{
 			   ESP_LOGE(TAG, "ILLEGAL HANDLE");
 			}
-
 			ble_profile_t* profile = (void*)0;
-			list_iterator_t *iterator = custom_list_iterator_new(mDeviceHandler->mProfileList, LIST_HEAD);
-			list_node_t *item = custom_list_iterator_next(iterator);
-			while (item){
-				profile = (ble_profile_t*)item->val;
+			uNode_t * profileNode = mDeviceHandler->mProfileList->tail;
+			while (profileNode)
+			{
+				/* code */
+				profile = (ble_profile_t*)profileNode->value;
 				if(profile->mGatt_if == gatts_if)
 				{
 					ble_service_t* service = (void*)0;
-					list_iterator_t *iterator1 = custom_list_iterator_new(profile->mServiceList, LIST_HEAD);
-					list_node_t *item1 = custom_list_iterator_next(iterator1);
-					while(item1)
+					uNode_t * serviceNode = profile->mServiceList->tail;
+					while (serviceNode)
 					{
-						service = (ble_service_t*)item1->val;
+						/* code */
+						service = (ble_service_t*)serviceNode->value;
 						if(service->mServiceHandle == param->add_char.service_handle)
 						{
 							ble_char_t* characteristic = (void*)0;
-							list_iterator_t *iterator2 = custom_list_iterator_new(service->mCharList, LIST_HEAD);
-							list_node_t *item2 = custom_list_iterator_next(iterator2);
-							while(item2)
+							uNode_t * charNode = service->mCharList->tail;
+							while (charNode)
 							{
-								characteristic = (ble_char_t*) item2->val;
+								/* code */
+								characteristic = (ble_char_t*) charNode->value; 
 								if(memcmp((void*)&characteristic->mChar_uuid->uuid,
 									(void*)&param->add_char.char_uuid.uuid,
 									characteristic->mChar_uuid->len) == 0 )
@@ -378,33 +368,28 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 									characteristic->mChar_handle = param->add_char.attr_handle;
 									ESP_LOGI(TAG, "Found char.Assigned handle id: %d\r\n", characteristic->mChar_handle);
 									ble_descrp_t* descrp = (void*)0;
-									list_iterator_t *iterator3 = custom_list_iterator_new(characteristic->mDescrList, LIST_HEAD);
-									list_node_t *item3 = custom_list_iterator_next(iterator3);
-									while(item3)
+									uNode_t *descrpNode = characteristic->mDescrList->tail;
+									while (descrpNode)
 									{
-										descrp = (ble_descrp_t*)item3->val;
+										/* code */
+										descrp = (ble_descrp_t*) descrpNode->value;
 										esp_err_t add_descr_ret = esp_ble_gatts_add_char_descr( service->mServiceHandle,  descrp->mDescr_uuid,
 										            											descrp->mPerm, descrp->mAtt, &descrp->mRsp);
 										 if (add_descr_ret)
 										 {
 											ESP_LOGE(TAG, "add char descr failed, error code = %x", add_descr_ret);
 										 }
-										item3 = custom_list_iterator_next(iterator3);
+										descrpNode = descrpNode->nextNode;
 									}
-									custom_list_iterator_destroy(iterator3);
 								}
-								item2 = custom_list_iterator_next(iterator2);
+								charNode = charNode->nextNode;
 							}
-							custom_list_iterator_destroy(iterator2);
 						}
-						item1 = custom_list_iterator_next(iterator1);
+						serviceNode = serviceNode->nextNode;
 					}
-					custom_list_iterator_destroy(iterator1);
 				}
-				item = custom_list_iterator_next(iterator);
+				profileNode = profileNode->nextNode;
 			}
-			custom_list_iterator_destroy(iterator);
-
 		}
 			break;
 		case ESP_GATTS_ADD_CHAR_DESCR_EVT:            /*!< When add descriptor complete, the event comes */
@@ -421,8 +406,7 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 		case ESP_GATTS_STOP_EVT:                      /*!< When stop service complete, the event comes */
 			ESP_LOGI(TAG, "ESP_GATTS_STOP_EVT");
 			break;
-		/*!< When gatt client connect, the event comes */
-		case ESP_GATTS_CONNECT_EVT:
+		case ESP_GATTS_CONNECT_EVT: 	/*!< When gatt client connect, the event comes */
 		{
 			esp_ble_conn_update_params_t conn_params = { 0 };
 			memcpy(conn_params.bda, param->connect.remote_bda, sizeof(esp_bd_addr_t));
@@ -438,23 +422,23 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 					param->connect.remote_bda[3], param->connect.remote_bda[4],
 					param->connect.remote_bda[5]);
 			ble_profile_t* profile = (void*)0;
-			list_iterator_t *iterator = custom_list_iterator_new(mDeviceHandler->mProfileList, LIST_HEAD);
-			list_node_t *item = custom_list_iterator_next(iterator);
-			while (item){
-				profile = (ble_profile_t*)item->val;
-				if(profile->mGatt_if == gatts_if){
+			uNode_t * profileNode = mDeviceHandler->mProfileList->tail;
+			while (profileNode)
+			{
+				/* code */
+				profile = (ble_profile_t*)profileNode->value;
+				if(profile->mGatt_if == gatts_if)
+				{
 					profile->mConn_id = param->connect.conn_id;
 					break;
 				}
-				item = custom_list_iterator_next(iterator);
+				profileNode = profileNode->nextNode;
 			}
-			custom_list_iterator_destroy(iterator);
 			//start sent the update connection parameters to the peer device.
 			esp_ble_gap_update_conn_params(&conn_params);
 		}
 			break;
-		/*!< When gatt client disconnect, the event comes */
-		case ESP_GATTS_DISCONNECT_EVT:
+		case ESP_GATTS_DISCONNECT_EVT: 					/*!< When gatt client disconnect, the event comes */
 			ESP_LOGI(TAG, "ESP_GATTS_DISCONNECT_EVT.\r\n disconnect reason 0x%x", param->disconnect.reason);
 			esp_ble_gap_start_advertising(&mDeviceHandler->mConfig->mAdvParams);
 			break;
@@ -490,8 +474,7 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 			break;
 	}
 
-
-
 }
+
 
 

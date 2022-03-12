@@ -19,8 +19,8 @@
 #include "esp_bt_defs.h"
 #include "esp_bt_main.h"
 #include "esp_gatt_common_api.h"
-#include "custom_list.h"
 #include "BleProfiles.h"
+#include "uList.h"
 
 
 typedef struct{
@@ -32,7 +32,7 @@ typedef struct{
 	char* mName;
 	uint8_t mProfileCount;
 	bleDevice_config_t* mConfig;
-	list_t* mProfileList;
+	uList_t* mProfileList;
 }bleDevice_handler_t;
 
 

@@ -18,7 +18,7 @@
 #include "esp_bt_defs.h"
 #include "esp_bt_main.h"
 #include "esp_gatt_common_api.h"
-#include "custom_list.h"
+#include "uList.h"
 
 //profiles
 typedef struct {
@@ -26,14 +26,14 @@ typedef struct {
 	uint16_t mGatt_if;
 	uint16_t mId;
 	uint16_t mConn_id;
-	list_t *mServiceList;
+	uList_t *mServiceList;
 } ble_profile_t;
 
 typedef struct {
 	uint16_t mServiceHandle;
 	uint8_t mNumHandle;
 	esp_gatt_srvc_id_t *mService_id;
-	list_t *mCharList;
+	uList_t *mCharList;
 } ble_service_t;
 
 typedef struct {
@@ -43,7 +43,7 @@ typedef struct {
 	esp_gatt_char_prop_t mProperty;
 	esp_attr_value_t *mAtt;
 	esp_attr_control_t mRsp;
-	list_t *mDescrList;
+	uList_t *mDescrList;
 } ble_char_t;
 
 typedef struct {
