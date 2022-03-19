@@ -57,6 +57,20 @@ typedef struct
    uint16_t  numItems;
 }uList_t;
 
+#define ITERATE_LIST(list, value, len, code)                \
+do {                                            \
+    if (list) {                                 \
+       uNode_t *node = list->tail;              \
+       while (node)                             \
+      {  \
+         value = node->value;                   \
+         len = node->len;\
+         code;          \
+         node = node->nextNode;                \
+      }                                         \
+    }                                           \
+} while (0)
+
 
 uList_t* uList_createList(void);
 uNode_t* uList_createNode( void * _val, uint16_t _len, uNode_alloc_t _f);
