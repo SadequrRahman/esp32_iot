@@ -26,7 +26,7 @@
 #include "esp_bt_defs.h"
 #include "esp_bt_main.h"
 #include "esp_gatt_common_api.h"
-
+#include "uList.h"
 #include "sdkconfig.h"
 
 
@@ -92,7 +92,7 @@ esp_err_t BleManager_setAdvRespData(esp_ble_adv_data_t* scanRespData);
 
 // gatt
 esp_gatt_profile_t* BleManager_createProfile(void);
-bool BleManager_addProfile(esp_gatt_profile_t* profile);
+int BleManager_addProfile(esp_gatt_profile_t* profile);
 //esp_gatt_service_t* BleManager_createService(void);
 //esp_gatt_char_t* BleManager_createCharacteristic(void);
 //esp_gatt_description_t* BleManager_createDescription(void);

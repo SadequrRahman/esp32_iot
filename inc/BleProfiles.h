@@ -20,6 +20,19 @@
 #include "esp_gatt_common_api.h"
 #include "uList.h"
 
+typedef struct
+{
+	uint16_t mConn_id;          /*!< Connection id */
+	uint16_t mGatts_if;			/*!< gatt interface id */
+	uint32_t mTrans_id;         /*!< Transfer id */
+	uint16_t mOffset;           /*!< Offset of the value, if the value is too long */
+	bool mIsLong;              /*!< The value is too long or not */
+}ble_eventParam_t;
+
+// char callbacks
+typedef void(*writeEvent_t)(void* value, uint16_t len);
+typedef void(*readEvent_t)(ble_eventParam_t param);
+
 //profiles
 typedef struct {
 	esp_gatts_cb_t mGatts_cb;
@@ -44,6 +57,8 @@ typedef struct {
 	esp_attr_value_t *mAtt;
 	esp_attr_control_t mRsp;
 	uList_t *mDescrList;
+	writeEvent_t mWriteEvent;
+	readEvent_t mReadEvent;
 } ble_char_t;
 
 typedef struct {
@@ -53,6 +68,9 @@ typedef struct {
 	esp_gatt_perm_t mPerm;
 	esp_attr_control_t mRsp;
 } ble_descrp_t;
+
+
+
 
 
 ble_profile_t* BleProfiles_createProfile(void);
@@ -68,5 +86,6 @@ ble_descrp_t* BleProfiles_createDescription(uint8_t *uuid, uint8_t uuidLen, uint
 void BleProfiles_setDescriptionPermission(ble_descrp_t *ds, uint16_t pem);
 void BleProfile_setDescriptionValue(ble_descrp_t *ds, uint8_t *value, uint8_t len, uint8_t maxLen);
 void BleProfiles_addDescription(ble_char_t *charactersitic, ble_descrp_t *ds);
+void BleProfiles_setReadCallback(ble_char_t *charactersitic, readEvent_t callback);
 
 #endif /* INC_BLEPROFILES_H_ */

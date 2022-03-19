@@ -59,6 +59,16 @@ uint8_t char1_str1[] = "Second Char";
 uint8_t DES_UUID[] = {0x00, 0x00, 0x00, 0x04, 0x10, 0x00, 0x20, 0x00, 0x30, 0x00, 0x11, 0x11, 0x22, 0x22, 0x33, 0x33};
 uint8_t desValue[] = "This is a test description";
 
+void char1ReadCallback(ble_eventParam_t param)
+{
+	ESP_LOGI(TAG, "%s\n", __func__);
+}
+
+void char2ReadCallback(ble_eventParam_t param)
+{
+	ESP_LOGI(TAG, "%s\n", __func__);
+}
+
 void app_main(void) {
 	esp_err_t ret;
 	/* Initialize NVS. */
@@ -86,6 +96,7 @@ void app_main(void) {
 	BleProfiles_setCharacteristicPermission(ch, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE );
 	BleProfiles_setCharacteristicProperty(ch, (ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE | ESP_GATT_CHAR_PROP_BIT_NOTIFY) );
 	BleProfile_setCharacteristicValue(ch, char1_str, sizeof(char1_str), 0x40);
+	BleProfiles_setReadCallback(ch, char1ReadCallback);
 
 
 	//
@@ -93,6 +104,7 @@ void app_main(void) {
 	BleProfiles_setCharacteristicPermission(ch1, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE );
 	BleProfiles_setCharacteristicProperty(ch1, (ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE | ESP_GATT_CHAR_PROP_BIT_NOTIFY) );
 	BleProfile_setCharacteristicValue(ch1, char1_str1, sizeof(char1_str1), 0x40);
+	BleProfiles_setReadCallback(ch1,char2ReadCallback);
 
 
 	//

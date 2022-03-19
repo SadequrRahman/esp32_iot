@@ -2,7 +2,7 @@
  * BleDevice.h
  *
  *  Created on: 14 Nov 2020
- *      Author: Rabby
+ *      Author: Mohammad Sadequr Rahman
  */
 
 #ifndef INC_BLEDEVICE_H_

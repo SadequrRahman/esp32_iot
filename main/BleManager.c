@@ -7,19 +7,13 @@
 
 #include "BleManager.h"
 
-typedef struct profileNode {
-	esp_gatt_profile_t *profile;
-	uint8_t idx;
-	struct profileNode *next;
-} profileNode_t;
-
 // Module veriables
 static const char *TAG = __FILE__;
 static char *mDeviceName = NULL;
-static uint8_t mProfileIdx = 0;
 //gap
 static esp_ble_adv_params_t *adv_params = NULL;
-static profileNode_t *mProfileList = NULL;
+//static profileNode_t *mProfileList = NULL;
+static uList_t *mProfileList = NULL;
 static uint8_t adv_service_uuid128[16] = {
 		/* LSB <--------------------------------------------------------------------------------> MSB */
 		//first uuid, 16bit, [12],[13] is the value
@@ -32,7 +26,8 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event,
 static void gatts_event_handler(esp_gatts_cb_event_t event,
 		esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 
-void BleManager_init(char *deviceName, uint8_t applicationID) {
+void BleManager_init(char *deviceName, uint8_t applicationID) 
+{
 	esp_err_t ret;
 	ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
 	esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
@@ -93,14 +88,17 @@ void BleManager_init(char *deviceName, uint8_t applicationID) {
 	if (ret) {
 		ESP_LOGE(TAG, "set device name failed, error code = %x", ret);
 	}
+	mProfileList = uList_createList();
 
 }
 
-const char* BleManager_getDeviceName(void) {
+const char* BleManager_getDeviceName(void) 
+{
 	return mDeviceName;
 }
 
-esp_ble_adv_data_t* BleManager_getDefaultAdvData(void) {
+esp_ble_adv_data_t* BleManager_getDefaultAdvData(void) 
+{
 	esp_ble_adv_data_t *default_adv_data = (esp_ble_adv_data_t*) malloc(
 			sizeof(esp_ble_adv_data_t));
 	memset((void*) default_adv_data, 0, sizeof(esp_ble_adv_data_t));
@@ -122,7 +120,8 @@ esp_ble_adv_data_t* BleManager_getDefaultAdvData(void) {
 	return default_adv_data;
 }
 
-esp_ble_adv_params_t* BleManager_getDefaultAdvertiseParam(void) {
+esp_ble_adv_params_t* BleManager_getDefaultAdvertiseParam(void) 
+{
 	esp_ble_adv_params_t *default_adv_params = (esp_ble_adv_params_t*) malloc(
 			sizeof(esp_ble_adv_params_t));
 	memset((void*) default_adv_params, 0, sizeof(esp_ble_adv_params_t));
@@ -175,27 +174,13 @@ esp_err_t BleManager_setAdvRespData(esp_ble_adv_data_t *scanRespData) {
 	return ret;
 }
 
-bool BleManager_addProfile(esp_gatt_profile_t *profile) {
-	bool ret = false;
-	if (profile) {
-		profileNode_t *head = mProfileList;
-		do {
-			if (head->profile == profile) {
-				ret = false;
-				break;
-			}
-			head = head->next;
-			ret = true;
-		} while (head);
-
-		if (ret) {
-			profileNode_t *n = (profileNode_t*) malloc(sizeof(profileNode_t));
-			n->idx = mProfileIdx;
-			mProfileIdx++;
-			n->next = mProfileList;
-			n->profile = profile;
-			mProfileList = n;
-		}
+int BleManager_addProfile(esp_gatt_profile_t *profile)
+ {
+	int ret = 1;
+	if (profile && mProfileList)
+	{
+		uNode_t * node = uList_createNode((void*)profile,sizeof(esp_gatt_profile_t),NODE_NON_SELF_ALLOC);
+		ret = uList_append(mProfileList, node);	
 	}
 	return ret;
 }

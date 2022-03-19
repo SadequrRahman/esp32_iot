@@ -65,6 +65,8 @@ ble_char_t* BleProfiles_createCharacteristic(uint8_t *uuid, uint8_t len, uint8_t
 	memcpy((void*)id->uuid.uuid128, (void*)uuid, len);
 	ch->mChar_uuid = id;
 	ch->mRsp.auto_rsp = autoRsp;
+	ch->mReadEvent = NULL;
+	ch->mWriteEvent = NULL;
 	return ch;
 }
 
@@ -143,4 +145,13 @@ void BleProfiles_addDescription(ble_char_t *charactersitic, ble_descrp_t *ds)
 			uNode_t *node = uList_createNode((void*)ds, sizeof(ble_descrp_t), NODE_NON_SELF_ALLOC);
 			uList_append(charactersitic->mDescrList, node);
 		}
+}
+
+void BleProfiles_setReadCallback(ble_char_t *charactersitic, readEvent_t callback)
+{
+	if (charactersitic && callback)
+	{
+		charactersitic->mReadEvent = callback;
+	}
+	
 }

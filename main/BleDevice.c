@@ -267,7 +267,53 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 		}
 			break;
 		case ESP_GATTS_READ_EVT:			/*!< When gatt client request read operation, the event comes */
-			ESP_LOGI(TAG, "ESP_GATTS_READ_EVT");
+			//ESP_LOGI(TAG, "ESP_GATTS_READ_EVT");
+			ESP_LOGI(TAG, "GATT_READ_EVT, conn_id %d, trans_id %d, handle %d\n", param->read.conn_id, param->read.trans_id, param->read.handle);
+			bool isFound = false;
+			void* value = NULL;
+			uint16_t len = 0;
+			ble_eventParam_t mParam;
+			ITERATE_LIST(mDeviceHandler->mProfileList, value, len, 
+			ESP_LOGI(TAG, "Profile iterator\n");
+			ble_profile_t* profile = (ble_profile_t*)value;
+				if(profile->mGatt_if == gatts_if)
+				{
+					mParam.mGatts_if = gatts_if;
+					ITERATE_LIST(profile->mServiceList, value, len, 
+						ESP_LOGI(TAG, "Service iterator\n");
+						ble_service_t* service = (ble_service_t*)value;
+							ITERATE_LIST(service->mCharList, value, len,
+								ESP_LOGI(TAG, "Characteristics iterator\n");
+								ble_char_t* characteristic = (ble_char_t*)value;
+								if(characteristic->mChar_handle == param->read.handle)
+								{
+									ESP_LOGI(TAG, "Found Char with proper handler\n");
+									mParam.mConn_id = param->read.conn_id;
+									mParam.mTrans_id = param->read.trans_id;
+									mParam.mOffset = param->read.offset;
+									mParam.mIsLong = param->read.is_long;
+									if(characteristic->mReadEvent)
+										characteristic->mReadEvent(mParam);
+									isFound = true;
+									break;
+								}
+								ITERATE_LIST(characteristic->mDescrList, value, len, 
+									ble_descrp_t* descrp = (ble_descrp_t*)value;
+									ESP_LOGI(TAG, "Description iterator\n");
+									if(descrp->mDescr_handle == param->read.handle)
+									{
+										ESP_LOGI(TAG, "Found Description\n");
+										isFound = true;
+										break;
+									}
+								);
+								if (isFound) break;
+							);
+						if (isFound) break;
+						);
+				}
+			if (isFound) break;
+			);
 			break;
 		case ESP_GATTS_WRITE_EVT:			/*!< When gatt client request write operation, the event comes */
 			ESP_LOGI(TAG, "ESP_GATTS_WRITE_EVT");		
@@ -393,9 +439,39 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 		}
 			break;
 		case ESP_GATTS_ADD_CHAR_DESCR_EVT:            /*!< When add descriptor complete, the event comes */
+		{
 			ESP_LOGI(TAG, "ADD_DESCR_EVT, status %d, attr_handle %d, service_handle %d\n",
 			                  param->add_char.status, param->add_char.attr_handle,
 			                  param->add_char.service_handle);
+			void* value = NULL;
+			uint16_t len = 0;
+			ble_eventParam_t mParam;
+			ITERATE_LIST(mDeviceHandler->mProfileList, value, len, 
+			ble_profile_t* profile = (ble_profile_t*)value;
+				if(profile->mGatt_if == gatts_if)
+				{
+					mParam.mGatts_if = gatts_if;
+					ITERATE_LIST(profile->mServiceList, value, len, 
+						ble_service_t* service = (ble_service_t*)value;
+							ITERATE_LIST(service->mCharList, value, len,
+								ble_char_t* characteristic = (ble_char_t*)value;
+								ITERATE_LIST(characteristic->mDescrList, value, len, 
+									ble_descrp_t* descrp = (ble_descrp_t*)value;
+									if(memcmp((void*)&descrp->mDescr_uuid->uuid,
+									(void*)&param->add_char.char_uuid.uuid,
+									descrp->mDescr_uuid->len) == 0 )
+									{
+									   ESP_LOGI(TAG, "Found Description\n");
+									   descrp->mDescr_handle = param->add_char.attr_handle;
+									}
+									
+								);
+
+							);
+						);
+				}
+			);
+		}
 			break;
 		case ESP_GATTS_DELETE_EVT:                    /*!< When delete service complete, the event comes */
 			ESP_LOGI(TAG, "ESP_GATTS_DELETE_EVT");
