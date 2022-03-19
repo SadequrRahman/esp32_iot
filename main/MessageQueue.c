@@ -50,9 +50,9 @@ mStatus_t MessageQueue_Send(msg_t *msg)
 	if (msgQueue == NULL)
 		return mErr;
 	portMUX_TYPE myMutex = portMUX_INITIALIZER_UNLOCKED;
-	vTaskEnterCritical(&myMutex);
+	vPortEnterCritical(&myMutex);
 	unsigned int len = recevierList[msg->src].len;
-	vTaskExitCritical(&myMutex);
+	vPortExitCritical(&myMutex);
 	if (len == 0)
 		return mNoRecDefine;
 
@@ -77,9 +77,9 @@ mStatus_t MessageQueue_RegisterMsg(msg_src_t src, msgQueueCallback_t mCallback)
 		if (i == src) {
 			list_node_t *node = custom_list_node_new((void*)mCallback);
 			portMUX_TYPE myMutex = portMUX_INITIALIZER_UNLOCKED;
-			vTaskEnterCritical(&myMutex);
+			vPortEnterCritical(&myMutex);
 			custom_list_lpush(&recevierList[i], node);
-			vTaskExitCritical(&myMutex);
+			vPortExitCritical(&myMutex);
 			return mPass;
 		}
 	}
@@ -94,9 +94,9 @@ mStatus_t MessageQueue_DeregisterMsg(msgQueueCallback_t mCallback)
 		list_node_t *node = custom_list_find(&recevierList[i], mCallback);
 		if (node != NULL) {
 			portMUX_TYPE myMutex = portMUX_INITIALIZER_UNLOCKED;
-			vTaskEnterCritical(&myMutex);
+			vPortEnterCritical(&myMutex);
 			custom_list_remove(&recevierList[i], node);
-			vTaskExitCritical(&myMutex);
+			vPortExitCritical(&myMutex);
 			return mPass;
 		}
 	}
